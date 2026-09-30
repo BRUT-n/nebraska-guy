@@ -1,0 +1,45 @@
+[project]
+name = "nebraska-guy"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "pydantic>=2.13.5",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "ruff>=0.16.9",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle (стиль)
+    "F",   # pyflakes (ошибки)
+    "I",   # isort (порядок импортов)
+    "B",   # flake8-bugbear (подозрительные места)
+    "UP",  # pyupgrade (устаревший синтаксис)
+    "S",   # bandit (безопасность)
+    "C4",  # flake8-comprehensions (улучшения comprehension)
+    "SIM", # flake8-simplify (упрощения кода)
+    "RUF", # правила самого Ruff
+]
+ignore = [
+    "E501",  # длину строк проверяет форматтер, линтеру не надо
+    "S101",  # assert — мы используем его в тестах
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]  # в тестах assert — это норма
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
