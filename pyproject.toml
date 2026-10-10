@@ -38,6 +38,7 @@ select = [
     "C4",  # flake8-comprehensions (улучшения comprehension)
     "SIM", # flake8-simplify (упрощения кода)
     "RUF", # правила самого Ruff
+    "BLE001", # общие исключения, вместо конкретных
 ]
 allowed-confusables = ["В", "в", "с", "е", "а", "е", "о", "р", "с", "х"]
 ignore = [

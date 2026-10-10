@@ -7,7 +7,7 @@ load_dotenv()
 
 def build_neo4j_url() -> str:
     """
-    Собирает URL подключения из переменных окружения
+    Собирает URL подключения для neo4j из переменных окружения.
     """
     user = os.environ.get("NEO4J_USERNAME", "neo4j")
     password = os.environ["NEO4J_PASSWORD"]
