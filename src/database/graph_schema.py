@@ -1,17 +1,21 @@
 from neomodel import adb
 
-from src.database.graph_models import PackageNode, ScanNode
-
 
 async def install_graph_schema() -> None:
     """
-    Применяет все constraints и indexes из моделей + композитный constraint
+    Применяет ограничения и индексы в графовой БД.
+    Необходим т.к. neomodel применяет неидемпотентно.
     """
-    # Стандартные labels из моделей (unique_index, index
-    await adb.install_labels(ScanNode)
-    await adb.install_labels(PackageNode)
 
-    # Композитный уникальный constraint (не поддерживается через модели)
+    # уникальный->(автоиндексация) constraint на Scan.scan_id
+    await adb.cypher_query(
+        """
+        CREATE CONSTRAINT scan_id_unique IF NOT EXISTS
+        FOR (s:Scan) REQUIRE s.scan_id IS UNIQUE
+        """
+    )
+
+    # Композитный уникальный->(автоиндексация) constraint на Package
     await adb.cypher_query(
         """
         CREATE CONSTRAINT package_unique IF NOT EXISTS
@@ -19,11 +23,25 @@ async def install_graph_schema() -> None:
         """
     )
 
-    # Дополнительные индексы, которые не описаны в моделях
+    # Индексы для быстрого поиска по базе сканов
     await adb.cypher_query(
         """
         CREATE INDEX scan_status_idx IF NOT EXISTS
         FOR (s:Scan) ON (s.status)
+        """
+    )
+
+    await adb.cypher_query(
+        """
+        CREATE INDEX package_scan_id_idx IF NOT EXISTS
+        FOR (p:Package) ON (p.scan_id)
+        """
+    )
+
+    await adb.cypher_query(
+        """
+        CREATE INDEX package_name_idx IF NOT EXISTS
+        FOR (p:Package) ON (p.name)
         """
     )
 

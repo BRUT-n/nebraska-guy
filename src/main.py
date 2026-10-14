@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from neomodel import adb, get_config
 
+from src.api.v1.scans import router as scans_router
 from src.database.graph_schema import install_graph_schema
 from src.settings import build_neo4j_url
 
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(scans_router)
 
 
 @app.get("/health")

@@ -15,7 +15,7 @@ class ScanNode(AsyncStructuredNode):
 
     __label__ = "Scan"
 
-    scan_id = IntegerProperty(unique_index=True, required=True)
+    scan_id = IntegerProperty(required=True)
     root_package = StringProperty(required=True)
     status = StringProperty(required=True)
 
@@ -28,7 +28,7 @@ class PackageNode(AsyncStructuredNode):
     __label__ = "Package"
 
     scan_id = IntegerProperty(required=True)
-    name = StringProperty(required=True, index=True)
+    name = StringProperty(required=True)
     ecosystem = StringProperty(required=True)
     version = StringProperty()
     contributors_count = IntegerProperty()
