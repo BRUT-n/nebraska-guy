@@ -6,13 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "asyncpg>=0.31.0",
-    "fastapi>=0.141.1",
+    "fastapi[standard]>=0.141.1",
     "neo4j>=6.1.0,<6.2",
     "neomodel>=7.0.0",
     "piccolo[postgres]>=1.36.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.4",
-    "uvicorn>=0.54.0",
 ]
 
 [dependency-groups]
@@ -43,6 +42,7 @@ select = [
 ignore = [
     "E501",  # длину строк проверяет форматтер, линтеру не надо
     "S101",  # assert — мы используем его в тестах
+    "RUF001", # омоглифы в коде
     "RUF002", # омоглифы в докстринг
     "RUF003", # омоглифы в комментариях
 ]
