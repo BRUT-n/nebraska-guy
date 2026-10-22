@@ -20,3 +20,9 @@ class PackageNotFoundError(PyPIClientError):
     """
     Пакен не найден в PyPI.
     """
+
+
+class InvalidDependencyString(BaseAppError):
+    """
+    Строка зависимости не соответствует спецификации PEP 508.
+    """
