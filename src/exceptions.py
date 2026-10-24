@@ -26,3 +26,21 @@ class InvalidDependencyString(BaseAppError):
     """
     Строка зависимости не соответствует спецификации PEP 508.
     """
+
+
+class GitHubClientError(ExternalServiceError):
+    """
+    Базовая ошибка клиента GitHub.
+    """
+
+
+class RepoNotFoundError(GitHubClientError):
+    """
+    Репозиторий не найден на GitHub.
+    """
+
+
+class NoCommitsError(GitHubClientError):
+    """
+    Репозиторий существует, но в нем нет коммитов.
+    """
