@@ -1,5 +1,7 @@
 from neomodel import (
+    AsyncRelationshipTo,
     AsyncStructuredNode,
+    AsyncStructuredRel,
     BooleanProperty,
     DateTimeProperty,
     FloatProperty,
@@ -20,6 +22,15 @@ class ScanNode(AsyncStructuredNode):
     status = StringProperty(required=True)
 
 
+class DependsOnRel(AsyncStructuredRel):
+    """
+    Свойства связи DEPENDS_ON.
+    """
+
+    constraint = StringProperty()
+    dependency_type = StringProperty()
+
+
 class PackageNode(AsyncStructuredNode):
     """
     Узел пакета в графе.
@@ -38,3 +49,5 @@ class PackageNode(AsyncStructuredNode):
     stars = IntegerProperty()
     bus_factor = IntegerProperty()
     fragility_score = FloatProperty()
+
+    depends_on = AsyncRelationshipTo("PackageNode", "DEPENDS_ON", model=DependsOnRel)
