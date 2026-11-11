@@ -49,6 +49,9 @@ def _parse_github_url(url: str) -> tuple[str, str] | None:
     if not url:
         return None
 
+    if not url.startswith(("https://", "http://")):
+        url = "https://" + url
+
     try:
         parsed = urlparse(url)
     except ValueError:

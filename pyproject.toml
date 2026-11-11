@@ -16,8 +16,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "asgi-lifespan>=2.1.0",
     "pre-commit>=4.6.2",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.4.1",
+    "pytest-cov>=7.1.0",
+    "respx>=0.23.1",
     "ruff>=0.16.9",
+    "testcontainers[neo4j,postgres]>=4.15.0",
 ]
 
 [tool.ruff]
@@ -53,3 +59,13 @@ ignore = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.pytest.ini_options]
+# исходный код проекта
+pythonpath = ["."]
+# тесты
+testpaths = ["tests"]
+# обрабатывать асинхронные тесты
+asyncio_mode = "auto"
+# время жизни цикла событий по умолчанию
+asyncio_default_fixture_loop_scope = "session"

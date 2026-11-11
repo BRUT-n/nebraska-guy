@@ -11,14 +11,14 @@ def is_valid_package_name(name: str) -> tuple[bool, str]:
     ascii_nums = set(ascii_letters + digits)
     allowed_extra = {".", "-", "_"}
 
+    for ch in name:
+        if ch not in ascii_nums and ch not in allowed_extra:
+            return False, f"Недопустимый символ в имени пакета {ch!r}"
+
     if name[0] not in ascii_nums:
         return False, "имя пакета должно начинаться с буквы или цифры"
     if name[-1] not in ascii_nums:
         return False, "имя пакета должно заканчиваться буквой или цифрой"
-
-    for ch in name:
-        if ch not in ascii_nums and ch not in allowed_extra:
-            return False, f"Недопустипый символ в имени пакета {ch!r}"
 
     return True, ""
 

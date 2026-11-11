@@ -12,3 +12,4 @@ wheels/
 # Other
 .ruff_cache
 .env
+cov_html
