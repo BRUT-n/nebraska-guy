@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from src.database.tables.tables import Scan
 
 
@@ -55,3 +57,27 @@ async def update_scan_status(scan_id: int, new_status: str) -> bool:
         .returning(Scan.scan_id)
     )
     return len(updated_rows) > 0
+
+
+async def finalize_scan(
+    scan_id: int,
+    status: str,
+    total_nodes: int,
+    error_message: str | None,
+) -> bool:
+    """
+    Финализирует запись о скане в БД по параметрам.
+    """
+    updated_scan = await (
+        Scan.update(
+            {
+                Scan.status: status,
+                Scan.total_nodes: total_nodes,
+                Scan.completed_at: datetime.now(UTC),
+                Scan.error_message: error_message,
+            }
+        )
+        .where(Scan.scan_id == scan_id)
+        .returning(Scan.scan_id)
+    )
+    return len(updated_scan) > 0

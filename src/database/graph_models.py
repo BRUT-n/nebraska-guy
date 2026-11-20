@@ -21,6 +21,8 @@ class ScanNode(AsyncStructuredNode):
     root_package = StringProperty(required=True)
     status = StringProperty(required=True)
 
+    includes = AsyncRelationshipTo("PackageNode", "INCLUDES")
+
 
 class DependsOnRel(AsyncStructuredRel):
     """

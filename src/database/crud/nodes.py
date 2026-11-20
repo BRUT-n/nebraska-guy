@@ -112,3 +112,13 @@ async def create_depends_on_edge(
     """
     properties = {"constraint": constraint, "dependency_type": dependency_type}
     await parent.depends_on.connect(child, properties=properties)  # type: ignore[reportAttributeAccessIssue]
+
+
+async def create_includes_edge(
+    scan_node: ScanNode,
+    package_node: PackageNode,
+) -> None:
+    """
+    Связывает узел ScanNode с корневым узломи Package. Идемпотентно.
+    """
+    await scan_node.includes.connect(package_node)  # type: ignore[reportAttributeAccessIssue]

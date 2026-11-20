@@ -3,6 +3,7 @@ from datetime import datetime
 from src.database.crud.scans import (
     count_scans,
     create_scan,
+    finalize_scan,
     get_list_scans,
     get_scan_by_id,
     update_scan_status,
@@ -72,3 +73,30 @@ async def test_update_scan_status_success(create_test_scan):
     updated_scan = await get_scan_by_id(existed_scan_id)
     assert updated_scan is not None
     assert updated_scan.status == "new status"
+
+
+async def test_finalize_scan_success(create_test_scan):
+    """
+    Проверка финализации записи БД после выполненого анализа пакета.
+    """
+    exising_raw = create_test_scan
+
+    result = await finalize_scan(
+        scan_id=exising_raw.scan_id, status="new status", total_nodes=10, error_message=None
+    )
+
+    assert result is True
+
+    finalized_raw = await get_scan_by_id(exising_raw)
+
+    assert finalized_raw is not None
+    assert finalized_raw.status == "new status"
+    assert finalized_raw.total_nodes == 10
+    assert finalized_raw.error_message is None
+
+
+async def test_finalize_scan_not_found():
+    """
+    Проверка отсутствия изменений в БД если запись не найдена.
+    """
+    assert await finalize_scan(999, "status", 10, None) is False
