@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import os
 from datetime import datetime
 
@@ -9,6 +11,8 @@ from src.models.github import GitHubRepoInfo
 GITHUB_API_URL = "https://api.github.com"
 USER_AGENT = "nebraska-guy/0.1.0 (https://github.com/BRUT-n/nebraska-guy)"
 DEFAULT_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0)
+
+logger = logging.getLogger(__name__)
 
 
 def _get_headers() -> dict[str, str]:
@@ -72,7 +76,7 @@ async def _request(
     return response
 
 
-async def get_repo(owner: str, repo: str) -> GitHubRepoInfo:
+async def get_repo_base_info(owner: str, repo: str) -> GitHubRepoInfo:
     """
     Получает метаданные репозитория.
     None - если репо не найден.
@@ -83,12 +87,15 @@ async def get_repo(owner: str, repo: str) -> GitHubRepoInfo:
         raise RepoNotFoundError(f"Repo '{owner}/{repo}' not found on GitHub")
 
     data = response.json()
+    pushed_at_raw = data.get("pushed_at")
+    pushed_at_datetime = datetime.fromisoformat(pushed_at_raw) if pushed_at_raw else None
+
     return GitHubRepoInfo(
         owner=owner,
         name=repo,
         stars=data.get("stargazers_count", 0),
         archived=data.get("archived", False),
-        pushed_at=data.get("pushed_at"),
+        pushed_at=pushed_at_datetime,
     )
 
 
@@ -107,9 +114,9 @@ async def get_contributors_count(owner: str, repo: str) -> int:
         raise RepoNotFoundError(f"Cannot get contributors: Repository '{owner}/{repo}' not found")
 
     # В GitHub API нет прямого поля "contributors_count".
-    # ТРЮК: Мы смотрим на служебный HTTP-заголовок 'Link'.
+    # МЕХАНИКА: служебный HTTP-заголовок 'Link'.
     # Если страниц много, GitHub возвращает ссылку на последнюю страницу (rel="last").
-    # Так как на одной странице у нас ровно 1 объект (per_page=1),
+    # Так как на одной странице ровно 1 объект (per_page=1),
     # то номер последней страницы равен общему количеству контрибьюторов.
     if "last" in response.links:
         last_url = response.links["last"]["url"]
@@ -140,3 +147,39 @@ async def get_last_commit_at(owner: str, repo: str) -> datetime:
 
     commit_date_str = data[0]["commit"]["author"]["date"]
     return datetime.fromisoformat(commit_date_str)
+
+
+async def fetch_repo_info_for_node(owner: str, repo: str) -> dict:
+    """
+    Собирает данные GitHub для узла PackageNode.
+    last_commit_at заполняется сначала из инфо о пуше,
+    но если есть информация о коммите, то перезаписывается.
+    """
+    full_node_data: dict = {"github_repo_url": f"https://github.com/{owner}/{repo}"}
+
+    results = await asyncio.gather(
+        get_repo_base_info(owner, repo),
+        get_contributors_count(owner, repo),
+        get_last_commit_at(owner, repo),
+        return_exceptions=True,
+    )
+    repo_base_info, cont_count, last_commit_info = results
+
+    if isinstance(repo_base_info, GitHubRepoInfo):
+        full_node_data["stars"] = repo_base_info.stars
+        full_node_data["is_archived"] = repo_base_info.archived
+        full_node_data["last_commit_at"] = repo_base_info.pushed_at
+    elif isinstance(repo_base_info, GitHubClientError):
+        logger.warning("%s", repo_base_info)
+
+    if isinstance(cont_count, int):
+        full_node_data["contributors_count"] = cont_count
+    elif isinstance(cont_count, GitHubClientError):
+        logger.warning("%s", cont_count)
+
+    if isinstance(last_commit_info, datetime):
+        full_node_data["last_commit_at"] = last_commit_info
+    elif isinstance(last_commit_info, GitHubClientError):
+        logger.warning("%s", last_commit_info)
+
+    return full_node_data

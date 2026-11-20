@@ -1,6 +1,7 @@
 import pytest
 from src.database.crud.nodes import (
     create_depends_on_edge,
+    create_includes_edge,
     create_package_node,
     create_scan_node,
     get_package_node,
@@ -8,6 +9,7 @@ from src.database.crud.nodes import (
     update_package_node,
     update_scan_node_status,
 )
+from src.database.graph_models import ScanNode
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -157,3 +159,19 @@ async def test_create_depends_on_edge():
     updated_parent = await get_package_node(1, "parent", "pypi")
     edges_after_second_call = await updated_parent.depends_on.all()  # type: ignore[reportAttributeAccessIssue]
     assert len(edges_after_second_call) == 1
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_includes_edge(create_test_scan_node, create_test_package_node):
+    """
+    Проверка создания связи между сканом и корневым узлом.
+    """
+    existing_scan = create_test_scan_node
+    existing_package = create_test_package_node
+
+    await create_includes_edge(existing_scan, existing_package)
+
+    updated_scan = await ScanNode.nodes.get(scan_id=existing_scan.scan_id)
+    edges = await updated_scan.includes.all()  # type: ignore[reportAttributeAccessIssue]
+    assert len(edges) == 1
+    assert edges[0].name == existing_package.name
