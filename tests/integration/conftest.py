@@ -7,6 +7,7 @@ from src.database.graph_models import PackageNode, ScanNode
 from src.database.tables.tables import Scan
 from testcontainers.community.neo4j import Neo4jContainer
 from testcontainers.community.postgres import PostgresContainer
+from testcontainers.community.redis import RedisContainer
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -20,6 +21,7 @@ def setup_containers():
     with (
         PostgresContainer("postgres:17-alpine") as psg,
         Neo4jContainer("neo4j:5-community") as neo4j,
+        RedisContainer("redis:8-alpine") as rds,
     ):
         os.environ["POSTGRES_USER"] = psg.username
         os.environ["POSTGRES_PASSWORD"] = psg.password
@@ -33,6 +35,9 @@ def setup_containers():
         os.environ["NEO4J_BOLT_PORT"] = str(neo4j.get_exposed_port(7687))
 
         os.environ["GITHUB_TOKEN"] = "fake-github-token"  # noqa: S105
+
+        os.environ["REDIS_HOST"] = rds.get_container_host_ip()
+        os.environ["REDIS_PORT"] = str(rds.get_exposed_port(6379))
 
         yield
 
@@ -84,6 +89,18 @@ async def clean_databases(setup_database, neo4j_db_connection):
     # )
     await adb.cypher_query("MATCH (n) DETACH DELETE n")
 
+    yield
+
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def clean_redis():
+    """
+    Флашит redis перед каждым тестом.
+    """
+    from src.core.redis_client import get_redis_client
+
+    rds_client = await get_redis_client()
+    await rds_client.flushdb()
     yield
 
 

@@ -50,11 +50,9 @@ async def test_get_or_create_package_node_collect_data_from_clients(monkeypatch)
             "github_repo_url": "https://github.com",
         }
     )
-    monkeypatch.setattr("src.services.crawler.get_package", get_package_mock)
+    monkeypatch.setattr("src.services.crawler.cached_pypi_package", get_package_mock)
     monkeypatch.setattr("src.services.crawler.extract_github_repo", extract_github_repo_mock)
-    monkeypatch.setattr(
-        "src.services.crawler.fetch_repo_info_for_node", fetch_repo_info_for_node_mock
-    )
+    monkeypatch.setattr("src.services.crawler.cached_github_repo", fetch_repo_info_for_node_mock)
 
     node, deps = await _get_or_create_package_node(ctx, "package-to-create")
 
@@ -81,7 +79,7 @@ async def test_get_or_create_package_node_pypi_error(monkeypatch):
     ctx = CrawlContext(scan_id=1)
     get_package_mock = AsyncMock(side_effect=PackageNotFoundError("Not found"))
 
-    monkeypatch.setattr("src.services.crawler.get_package", get_package_mock)
+    monkeypatch.setattr("src.services.crawler.cached_pypi_package", get_package_mock)
 
     node, deps = await _get_or_create_package_node(ctx, "broken-package")
 
@@ -103,7 +101,7 @@ async def test_get_or_create_package_node_without_github(monkeypatch):
         )
     )
     extract_github_repo_mock = MagicMock(return_value=None)
-    monkeypatch.setattr("src.services.crawler.get_package", get_package_mock)
+    monkeypatch.setattr("src.services.crawler.cached_pypi_package", get_package_mock)
     monkeypatch.setattr("src.services.crawler.extract_github_repo", extract_github_repo_mock)
 
     node, deps = await _get_or_create_package_node(ctx, "package-no-git")
@@ -179,7 +177,7 @@ async def test_visit_package_creates_nodes_and_edges(monkeypatch):
         name="dep2", version=">=1.0", requires_dist=None, project_urls=None
     )
     monkeypatch.setattr(
-        "src.services.crawler.get_package",
+        "src.services.crawler.cached_pypi_package",
         AsyncMock(side_effect=[root_package, dep1_package, dep2_package]),
     )
 
