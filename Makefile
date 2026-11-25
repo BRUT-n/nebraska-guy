@@ -26,7 +26,7 @@ install:
 	uv sync
 
 up:
-	$(COMPOSE) up -d --wait postgres neo4j
+	$(COMPOSE) up -d --wait postgres neo4j redis
 
 down:
 	$(COMPOSE) down

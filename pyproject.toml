@@ -12,6 +12,7 @@ dependencies = [
     "piccolo[postgres]>=1.36.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.4",
+    "redis[hiredis]>=8.1.0",
 ]
 
 [dependency-groups]

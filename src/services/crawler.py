@@ -2,8 +2,6 @@ import json
 import logging
 from dataclasses import dataclass, field
 
-from src.clients.github import fetch_repo_info_for_node
-from src.clients.pypi import get_package
 from src.database.crud.nodes import (
     create_depends_on_edge,
     create_includes_edge,
@@ -16,6 +14,7 @@ from src.database.crud.scans import finalize_scan, update_scan_status
 from src.database.graph_models import PackageNode
 from src.exceptions import BaseAppError, PackageNotFoundError, PyPIClientError
 from src.models.requirement import ParsedDependency
+from src.services.cached_clients import cached_github_repo, cached_pypi_package
 from src.services.dependency_parser import parse_requirements
 from src.services.github_link import extract_github_repo
 
@@ -44,6 +43,7 @@ async def _get_or_create_package_node(
 ) -> tuple[PackageNode | None, list[ParsedDependency]]:
     """
     Возвращает узел пакета из БД и список его зависимостей (если пакет скачан впервые).
+    Встроено кеширование.
     """
     existing_package_node = await get_package_node(ctx.scan_id, package_name, "pypi")
     if existing_package_node is not None:
@@ -51,7 +51,7 @@ async def _get_or_create_package_node(
 
     # получения информации от PyPI
     try:
-        info = await get_package(package_name)
+        info = await cached_pypi_package(package_name)
     except (PackageNotFoundError, PyPIClientError) as exc:
         logger.warning("PyPI failed for %s: %s", package_name, exc)
         ctx.failed_packages.append(package_name)
@@ -61,7 +61,7 @@ async def _get_or_create_package_node(
     github_fields = {}
     owner_repo = extract_github_repo(info)
     if owner_repo is not None:
-        github_fields = await fetch_repo_info_for_node(*owner_repo)
+        github_fields = await cached_github_repo(*owner_repo)
 
     # создание узла с полученными данными
     new_node = await create_package_node(

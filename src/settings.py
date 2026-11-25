@@ -14,3 +14,12 @@ def build_neo4j_url() -> str:
     host = os.environ.get("NEO4J_HOST", "localhost")
     port = os.environ.get("NEO4J_BOLT_PORT", "7687")
     return f"bolt://{user}:{password}@{host}:{port}"
+
+
+def build_redis_url() -> str:
+    """
+    Собирает URL подключения redis из переменных окружения
+    """
+    host = os.environ.get("REDIS_HOST", "localhost")
+    port = os.environ.get("REDIS_PORT", "6379")
+    return f"redis://{host}:{port}/0"
