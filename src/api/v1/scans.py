@@ -1,11 +1,31 @@
+import asyncio
+import logging
+
 from fastapi import APIRouter, HTTPException, Path, Query, status
 from pydantic import TypeAdapter
 from src.models.scan import ScanCreateSchema, ScanReadSchema
 from src.services import scans as scans_service
+from src.services.crawler import run_scan
 
 router = APIRouter(prefix="/scans", tags=["scans"])
 
 scans_list_adapter = TypeAdapter(list[ScanReadSchema])
+
+
+logger = logging.getLogger(__name__)
+
+_background_tasks: set[asyncio.Task] = set()
+
+
+async def _run_scan_background_safe(scan_id: int, root_package: str) -> None:
+    """
+    Обертка для безопасного фонового выполнения функции run_scan.
+    Используется для отслеживания ошибок при выполнении в фоне.
+    """
+    try:
+        await run_scan(scan_id, root_package)
+    except Exception:
+        logger.exception("Background scan %d for %s crashed", scan_id, root_package)
 
 
 @router.post(
@@ -15,12 +35,30 @@ scans_list_adapter = TypeAdapter(list[ScanReadSchema])
 )
 async def create_scan(payload: ScanCreateSchema) -> ScanReadSchema:
     """
-    Создает новый скан.
+    Создает новую запись о скане в Postgres и отдает пользователю.
+    Запускает фоновую задачу краулера в текущем event loop ->
+    удаляет задачу из памяти после завершения.
     """
     scan = await scans_service.create_new_scan(
         root_package=payload.root_package,
         root_ecosystem=payload.root_ecosystem,
     )
+
+    task = asyncio.create_task(
+        _run_scan_background_safe(scan_id=scan.scan_id, root_package=scan.root_package),
+        name=f"scan-{scan.scan_id}",
+    )
+
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
+    logger.info(
+        "Queued scan %d for %s (task=%s)",
+        scan.scan_id,
+        payload.root_package,
+        task.get_name(),
+    )
+
     return ScanReadSchema.model_validate(scan)
 
 

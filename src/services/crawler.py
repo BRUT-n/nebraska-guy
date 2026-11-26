@@ -168,4 +168,9 @@ async def run_scan(
         await finalize_scan(scan_id, "failed", ctx.nodes_count, str(exc))
         await update_scan_node_status(scan_id, "failed")
         raise
+    except Exception as exc:
+        logger.exception("Scan %s crashed with unexpected error: %s", scan_id, exc)
+        await finalize_scan(scan_id, "failed", ctx.nodes_count, f"Unexpected error: {exc}")
+        await update_scan_node_status(scan_id, "failed")
+        raise
     return ctx

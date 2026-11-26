@@ -18,7 +18,7 @@ class PyPIClientError(ExternalServiceError):
 
 class PackageNotFoundError(PyPIClientError):
     """
-    Пакен не найден в PyPI.
+    Пакет не найден в PyPI.
     """
 
 

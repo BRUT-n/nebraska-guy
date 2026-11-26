@@ -1,8 +1,23 @@
+import logging
 import os
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def setup_logging() -> None:
+    """
+    Настраивает базовое логирование приложения из переменных окружения.
+    """
+    log_level_name = os.environ.get("LOG_LEVEL", "INFO")
+    log_level = getattr(logging, log_level_name, logging.INFO)
+
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
 
 def build_neo4j_url() -> str:
